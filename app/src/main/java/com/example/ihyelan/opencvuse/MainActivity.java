@@ -1,32 +1,55 @@
 package com.example.ihyelan.opencvuse;
 
 import android.annotation.TargetApi;
+import android.content.ContentValues;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.SurfaceView;
+import android.view.View;
 import android.view.WindowManager;
+import android.widget.Button;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
+import org.opencv.android.Utils;
+import org.opencv.core.Core;
+import org.opencv.core.CvException;
 import org.opencv.core.Mat;
+import org.opencv.imgproc.Imgproc;
+
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
 
 
 public class MainActivity extends AppCompatActivity
-        implements CameraBridgeViewBase.CvCameraViewListener2 {
+        implements CameraBridgeViewBase.CvCameraViewListener2, View.OnTouchListener {
 
     private static final String TAG = "opencv";
     private CameraBridgeViewBase mOpenCvCameraView;
     private Mat matInput;
     private Mat matResult;
+    private boolean bSaveThisFrame = false;
+    private int cameraNumber = 0;
+
+    static final int PERMISSIONS_REQUEST_CODE = 1000;
+    String[] PERMISSIONS = {"android.permission.CAMERA", "android.permission.WRITE_EXTERNAL_STORAGE"};
 
     public native void ConvertRGBtoGray(long matAddrInput, long matAddrResult);
 
@@ -69,17 +92,30 @@ public class MainActivity extends AppCompatActivity
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             //퍼미션 상태 확인
             if (!hasPermissions(PERMISSIONS)) {
-
                 //퍼미션 허가 안되어있다면 사용자에게 요청
                 requestPermissions(PERMISSIONS, PERMISSIONS_REQUEST_CODE);
             }
         }
 
-        mOpenCvCameraView = (CameraBridgeViewBase) findViewById(R.id.activity_surface_view);
+        mOpenCvCameraView = findViewById(R.id.activity_surface_view);
         mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
         mOpenCvCameraView.setCvCameraViewListener(this);
-        mOpenCvCameraView.setCameraIndex(0); // front-camera(1),  back-camera(0)
+        mOpenCvCameraView.setCameraIndex(cameraNumber); // front-camera(1),  back-camera(0)
+        mOpenCvCameraView.setOnTouchListener(this);
         mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
+
+        Button mCameraChangeButton = findViewById(R.id.camera_change_btn);
+        mCameraChangeButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(cameraNumber == 1) cameraNumber = 0;
+                else cameraNumber = 1;
+                mOpenCvCameraView.setCameraIndex(cameraNumber);
+                mOpenCvCameraView.disableView();
+                mOpenCvCameraView.enableView();
+
+            }
+        });
     }
 
     @Override
@@ -111,34 +147,39 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onCameraViewStarted(int width, int height) {
-
     }
 
     @Override
     public void onCameraViewStopped() {
-
     }
 
     @Override
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
-
         matInput = inputFrame.rgba();
-
+        if(cameraNumber == 1) {
+            Core.flip(matInput, matInput, 1);
+        }
         //if ( matResult != null ) matResult.release(); fix 2018. 8. 18
-
         if (matResult == null)
-
             matResult = new Mat(matInput.rows(), matInput.cols(), matInput.type());
 
         ConvertRGBtoGray(matInput.getNativeObjAddr(), matResult.getNativeObjAddr());
 
+        if(bSaveThisFrame) {
+            Bitmap bmp = null;
+            try {
+                //Imgproc.cvtColor(seedsImage, tmp, Imgproc.COLOR_RGB2BGRA);
+                Imgproc.cvtColor(matResult, matResult, Imgproc.COLOR_GRAY2RGBA, 4);
+                bmp = Bitmap.createBitmap(matResult.cols(), matResult.rows(), Bitmap.Config.ARGB_8888);
+                Utils.matToBitmap(matResult, bmp);
+            }
+            catch (CvException e){Log.d("Exception",e.getMessage());}
+            savePNGImageToGallery(bmp, this, "filename.png");
+
+            bSaveThisFrame = false;
+        }
         return matResult;
     }
-
-
-    //여기서부턴 퍼미션 관련 메소드
-    static final int PERMISSIONS_REQUEST_CODE = 1000;
-    String[] PERMISSIONS = {"android.permission.CAMERA"};
 
 
     private boolean hasPermissions(String[] permissions) {
@@ -200,5 +241,51 @@ public class MainActivity extends AppCompatActivity
         builder.create().show();
     }
 
+    // Save the processed image as a PNG file on the SD card and shown in the Android Gallery.
+    protected void savePNGImageToGallery(Bitmap bmp, Context context, String baseFilename)
+    {
+        try {
+            // Get the file path to the SD card.
+            String baseFolder = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).getAbsolutePath() + "/";
+            File file = new File(baseFolder + baseFilename);
+            Log.i(TAG, "Saving the processed image to file [" + file.getAbsolutePath() + "]");
 
+            // Open the file.
+            OutputStream out = new BufferedOutputStream(new FileOutputStream(file));
+            // Save the image file as PNG.
+            bmp.compress(Bitmap.CompressFormat.PNG, 100, out);
+            out.flush();    // Make sure it is saved to file soon, because we are about to add it to the Gallery.
+            out.close();
+
+            // Add the PNG file to the Android Gallery.
+            ContentValues image = new ContentValues();
+            image.put(MediaStore.Images.Media.TITLE, baseFilename);
+            image.put(MediaStore.Images.Media.DISPLAY_NAME, baseFilename);
+            image.put(MediaStore.Images.Media.DESCRIPTION, "Processed by the Cartoonifier App");
+            image.put(MediaStore.Images.Media.DATE_TAKEN, System.currentTimeMillis()); // Milliseconds since 1970 UTC.
+            image.put(MediaStore.Images.Media.MIME_TYPE, "image/png");
+            image.put(MediaStore.Images.Media.ORIENTATION, 0);
+            image.put(MediaStore.Images.Media.DATA, file.getAbsolutePath());
+            Uri result = context.getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, image);
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public boolean onTouch(View v, MotionEvent event) {
+        // Ignore finger movement event, we just care about when the finger first touches the screen.
+        if (event.getAction() != MotionEvent.ACTION_DOWN) {
+            return false;   // We didn't do anything with this touch movement event.
+        }
+
+        Log.i(TAG, "onTouch down event");
+
+        bSaveThisFrame = true;
+        // Signal that we should cartoonify the next camera frame and save it, instead of just showing the sketch.
+        //mView.nextFrameShouldBeSaved(getBaseContext());
+
+        return false;
+    }
 }
