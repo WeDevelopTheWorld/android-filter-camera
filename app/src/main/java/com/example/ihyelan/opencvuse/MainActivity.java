@@ -47,18 +47,17 @@ public class MainActivity extends AppCompatActivity
     private Mat matResult;
     private boolean bSaveThisFrame = false;
     private int cameraNumber = 0;
+    private int pictureNumber = 0;
 
     static final int PERMISSIONS_REQUEST_CODE = 1000;
     String[] PERMISSIONS = {"android.permission.CAMERA", "android.permission.WRITE_EXTERNAL_STORAGE"};
 
     public native void ConvertRGBtoGray(long matAddrInput, long matAddrResult);
 
-
     static {
         System.loadLibrary("opencv_java4");
         System.loadLibrary("native-lib");
     }
-
 
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
@@ -75,7 +74,6 @@ public class MainActivity extends AppCompatActivity
             }
         }
     };
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -105,6 +103,8 @@ public class MainActivity extends AppCompatActivity
         mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
 
         Button mCameraChangeButton = findViewById(R.id.camera_change_btn);
+        Button mCameraShotButton = findViewById(R.id.camera_shot_btn);
+
         mCameraChangeButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -113,7 +113,13 @@ public class MainActivity extends AppCompatActivity
                 mOpenCvCameraView.setCameraIndex(cameraNumber);
                 mOpenCvCameraView.disableView();
                 mOpenCvCameraView.enableView();
+            }
+        });
 
+        mCameraShotButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                bSaveThisFrame = true;
             }
         });
     }
@@ -153,6 +159,10 @@ public class MainActivity extends AppCompatActivity
     public void onCameraViewStopped() {
     }
 
+    private void convertToGray(Mat input) {
+        ConvertRGBtoGray(input.getNativeObjAddr(), input.getNativeObjAddr());
+    }
+
     @Override
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
         matInput = inputFrame.rgba();
@@ -163,7 +173,8 @@ public class MainActivity extends AppCompatActivity
         if (matResult == null)
             matResult = new Mat(matInput.rows(), matInput.cols(), matInput.type());
 
-        ConvertRGBtoGray(matInput.getNativeObjAddr(), matResult.getNativeObjAddr());
+        convertToGray(matInput);
+        //ConvertRGBtoGray(matInput.getNativeObjAddr(), matResult.getNativeObjAddr());
 
         if(bSaveThisFrame) {
             Bitmap bmp = null;
@@ -174,7 +185,8 @@ public class MainActivity extends AppCompatActivity
                 Utils.matToBitmap(matResult, bmp);
             }
             catch (CvException e){Log.d("Exception",e.getMessage());}
-            savePNGImageToGallery(bmp, this, "filename.png");
+            savePNGImageToGallery(bmp, this, "filename" + pictureNumber + ".png");
+            pictureNumber++;
 
             bSaveThisFrame = false;
         }
@@ -187,15 +199,12 @@ public class MainActivity extends AppCompatActivity
 
         //스트링 배열에 있는 퍼미션들의 허가 상태 여부 확인
         for (String perms : permissions) {
-
             result = ContextCompat.checkSelfPermission(this, perms);
-
             if (result == PackageManager.PERMISSION_DENIED) {
                 //허가 안된 퍼미션 발견
                 return false;
             }
         }
-
         //모든 퍼미션이 허가되었음
         return true;
     }
@@ -259,6 +268,7 @@ public class MainActivity extends AppCompatActivity
 
             // Add the PNG file to the Android Gallery.
             ContentValues image = new ContentValues();
+
             image.put(MediaStore.Images.Media.TITLE, baseFilename);
             image.put(MediaStore.Images.Media.DISPLAY_NAME, baseFilename);
             image.put(MediaStore.Images.Media.DESCRIPTION, "Processed by the Cartoonifier App");
@@ -279,7 +289,6 @@ public class MainActivity extends AppCompatActivity
         if (event.getAction() != MotionEvent.ACTION_DOWN) {
             return false;   // We didn't do anything with this touch movement event.
         }
-
         Log.i(TAG, "onTouch down event");
 
         bSaveThisFrame = true;
