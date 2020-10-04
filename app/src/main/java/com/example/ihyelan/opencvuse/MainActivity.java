@@ -52,7 +52,9 @@ public class MainActivity extends AppCompatActivity
     static final int PERMISSIONS_REQUEST_CODE = 1000;
     String[] PERMISSIONS = {"android.permission.CAMERA", "android.permission.WRITE_EXTERNAL_STORAGE"};
 
+    public native void ConvertRGBtoRGB(long matAddrInput, long matAddrResult);
     public native void ConvertRGBtoGray(long matAddrInput, long matAddrResult);
+    public native void ConvertRGBtoSepia(long matAddrInput, long matAddrResult);
 
     static {
         System.loadLibrary("opencv_java4");
@@ -85,7 +87,6 @@ public class MainActivity extends AppCompatActivity
                 WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         setContentView(R.layout.activity_main);
-
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             //퍼미션 상태 확인
@@ -159,10 +160,6 @@ public class MainActivity extends AppCompatActivity
     public void onCameraViewStopped() {
     }
 
-    private void convertToGray(Mat input) {
-        ConvertRGBtoGray(input.getNativeObjAddr(), input.getNativeObjAddr());
-    }
-
     @Override
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
         matInput = inputFrame.rgba();
@@ -173,8 +170,7 @@ public class MainActivity extends AppCompatActivity
         if (matResult == null)
             matResult = new Mat(matInput.rows(), matInput.cols(), matInput.type());
 
-        convertToGray(matInput);
-        //ConvertRGBtoGray(matInput.getNativeObjAddr(), matResult.getNativeObjAddr());
+        ConvertRGBtoSepia(matInput.getNativeObjAddr(), matResult.getNativeObjAddr());
 
         if(bSaveThisFrame) {
             Bitmap bmp = null;
