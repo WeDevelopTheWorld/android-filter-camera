@@ -16,6 +16,7 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.SurfaceView;
 import android.view.View;
@@ -39,10 +40,11 @@ import java.io.OutputStream;
 
 
 public class MainActivity extends AppCompatActivity
-        implements CameraBridgeViewBase.CvCameraViewListener2, View.OnTouchListener {
+        implements CameraBridgeViewBase.CvCameraViewListener2, View.OnTouchListener, GestureDetector.OnGestureListener {
 
     private static final String TAG = "opencv";
     private CameraBridgeViewBase mOpenCvCameraView;
+
     private Mat matInput;
     private Mat matResult;
     private boolean bSaveThisFrame = false;
@@ -55,6 +57,7 @@ public class MainActivity extends AppCompatActivity
     public native void ConvertRGBtoRGB(long matAddrInput, long matAddrResult);
     public native void ConvertRGBtoGray(long matAddrInput, long matAddrResult);
     public native void ConvertRGBtoSepia(long matAddrInput, long matAddrResult);
+
 
     static {
         System.loadLibrary("opencv_java4");
@@ -97,6 +100,7 @@ public class MainActivity extends AppCompatActivity
         }
 
         mOpenCvCameraView = findViewById(R.id.activity_surface_view);
+
         mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
         mOpenCvCameraView.setCvCameraViewListener(this);
         mOpenCvCameraView.setCameraIndex(cameraNumber); // front-camera(1),  back-camera(0)
@@ -282,14 +286,46 @@ public class MainActivity extends AppCompatActivity
     @Override
     public boolean onTouch(View v, MotionEvent event) {
         // Ignore finger movement event, we just care about when the finger first touches the screen.
-        if (event.getAction() != MotionEvent.ACTION_DOWN) {
-            return false;   // We didn't do anything with this touch movement event.
-        }
-        Log.i(TAG, "onTouch down event");
-
-        bSaveThisFrame = true;
+//        if (event.getAction() != MotionEvent.ACTION_DOWN) {
+//            return false;   // We didn't do anything with this touch movement event.
+//        }
+//        Log.i(TAG, "onTouch down event");
+//
+//        bSaveThisFrame = true;
         // Signal that we should cartoonify the next camera frame and save it, instead of just showing the sketch.
         //mView.nextFrameShouldBeSaved(getBaseContext());
+
+        return false;
+    }
+
+
+    @Override
+    public boolean onDown(MotionEvent e) {
+        return false;
+    }
+
+    @Override
+    public void onShowPress(MotionEvent e) {
+
+    }
+
+    @Override
+    public boolean onSingleTapUp(MotionEvent e) {
+        return false;
+    }
+
+    @Override
+    public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+        return false;
+    }
+
+    @Override
+    public void onLongPress(MotionEvent e) {
+
+    }
+
+    @Override
+    public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
 
         return false;
     }
