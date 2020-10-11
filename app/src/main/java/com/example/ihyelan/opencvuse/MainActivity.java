@@ -54,8 +54,13 @@ public class MainActivity extends AppCompatActivity
     static final int PERMISSIONS_REQUEST_CODE = 1000;
     String[] PERMISSIONS = {"android.permission.CAMERA", "android.permission.WRITE_EXTERNAL_STORAGE"};
 
+    private static final int SWIPE_THRESHOLD = 100;
+    private static final int SWIPE_VELOCITY_THRESHOLD = 100;
+
     public native void ConvertRGBtoRGB(long matAddrInput, long matAddrResult);
+
     public native void ConvertRGBtoGray(long matAddrInput, long matAddrResult);
+
     public native void ConvertRGBtoSepia(long matAddrInput, long matAddrResult);
 
 
@@ -113,7 +118,7 @@ public class MainActivity extends AppCompatActivity
         mCameraChangeButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(cameraNumber == 1) cameraNumber = 0;
+                if (cameraNumber == 1) cameraNumber = 0;
                 else cameraNumber = 1;
                 mOpenCvCameraView.setCameraIndex(cameraNumber);
                 mOpenCvCameraView.disableView();
@@ -167,7 +172,7 @@ public class MainActivity extends AppCompatActivity
     @Override
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
         matInput = inputFrame.rgba();
-        if(cameraNumber == 1) {
+        if (cameraNumber == 1) {
             Core.flip(matInput, matInput, 1);
         }
         //if ( matResult != null ) matResult.release(); fix 2018. 8. 18
@@ -176,15 +181,16 @@ public class MainActivity extends AppCompatActivity
 
         ConvertRGBtoSepia(matInput.getNativeObjAddr(), matResult.getNativeObjAddr());
 
-        if(bSaveThisFrame) {
+        if (bSaveThisFrame) {
             Bitmap bmp = null;
             try {
                 //Imgproc.cvtColor(seedsImage, tmp, Imgproc.COLOR_RGB2BGRA);
                 Imgproc.cvtColor(matResult, matResult, Imgproc.COLOR_GRAY2RGBA, 4);
                 bmp = Bitmap.createBitmap(matResult.cols(), matResult.rows(), Bitmap.Config.ARGB_8888);
                 Utils.matToBitmap(matResult, bmp);
+            } catch (CvException e) {
+                Log.d("Exception", e.getMessage());
             }
-            catch (CvException e){Log.d("Exception",e.getMessage());}
             savePNGImageToGallery(bmp, this, "filename" + pictureNumber + ".png");
             pictureNumber++;
 
@@ -251,8 +257,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     // Save the processed image as a PNG file on the SD card and shown in the Android Gallery.
-    protected void savePNGImageToGallery(Bitmap bmp, Context context, String baseFilename)
-    {
+    protected void savePNGImageToGallery(Bitmap bmp, Context context, String baseFilename) {
         try {
             // Get the file path to the SD card.
             String baseFolder = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).getAbsolutePath() + "/";
@@ -277,8 +282,7 @@ public class MainActivity extends AppCompatActivity
             image.put(MediaStore.Images.Media.ORIENTATION, 0);
             image.put(MediaStore.Images.Media.DATA, file.getAbsolutePath());
             Uri result = context.getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, image);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -326,7 +330,18 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-
+        boolean result = false;
+        float diffY = e2.getY() - e1.getY();
+        float diffX = e2.getX() - e1.getX();
+        if (Math.abs(diffX) > Math.abs(diffY)) {
+            if (Math.abs(diffX) > SWIPE_THRESHOLD && Math.abs(velocityX) > SWIPE_VELOCITY_THRESHOLD) {
+                if (diffX > 0) {
+                    //onSwipeRight();
+                } else {
+                    //onSwipeLeft();
+                }
+            }
+        }
         return false;
     }
 }
