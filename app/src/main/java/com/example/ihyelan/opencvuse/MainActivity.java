@@ -191,13 +191,7 @@ public class MainActivity extends AppCompatActivity
             } catch (CvException e) {
                 Log.d("Exception", e.getMessage());
             }
-<<<<<<< HEAD
             savePNGImageToGallery(bmp, this, "RanFilter_" + System.currentTimeMillis() + ".png");
-=======
-            savePNGImageToGallery(bmp, this, "filename" + pictureNumber + ".png");
-            pictureNumber++;
-
->>>>>>> 929bbe37f8be1aacf63f905ac94cffaf4760fff1
             bSaveThisFrame = false;
         }
         return matResult;
@@ -307,7 +301,6 @@ public class MainActivity extends AppCompatActivity
     }
 
 
-<<<<<<< HEAD
 //    @Override
 //    public boolean onDown(MotionEvent e) {
 //        return false;
@@ -350,47 +343,4 @@ public class MainActivity extends AppCompatActivity
 //        return false;
 //    }
 
-=======
-    @Override
-    public boolean onDown(MotionEvent e) {
-        return false;
-    }
-
-    @Override
-    public void onShowPress(MotionEvent e) {
-
-    }
-
-    @Override
-    public boolean onSingleTapUp(MotionEvent e) {
-        return false;
-    }
-
-    @Override
-    public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
-        return false;
-    }
-
-    @Override
-    public void onLongPress(MotionEvent e) {
-
-    }
-
-    @Override
-    public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-        boolean result = false;
-        float diffY = e2.getY() - e1.getY();
-        float diffX = e2.getX() - e1.getX();
-        if (Math.abs(diffX) > Math.abs(diffY)) {
-            if (Math.abs(diffX) > SWIPE_THRESHOLD && Math.abs(velocityX) > SWIPE_VELOCITY_THRESHOLD) {
-                if (diffX > 0) {
-                    //onSwipeRight();
-                } else {
-                    //onSwipeLeft();
-                }
-            }
-        }
-        return false;
-    }
->>>>>>> 929bbe37f8be1aacf63f905ac94cffaf4760fff1
 }
