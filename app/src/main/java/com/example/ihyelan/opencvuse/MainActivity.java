@@ -40,7 +40,7 @@ import java.io.OutputStream;
 
 
 public class MainActivity extends AppCompatActivity
-        implements CameraBridgeViewBase.CvCameraViewListener2, View.OnTouchListener, GestureDetector.OnGestureListener {
+        implements CameraBridgeViewBase.CvCameraViewListener2, View.OnTouchListener {
 
     private static final String TAG = "opencv";
     private CameraBridgeViewBase mOpenCvCameraView;
@@ -49,7 +49,6 @@ public class MainActivity extends AppCompatActivity
     private Mat matResult;
     private boolean bSaveThisFrame = false;
     private int cameraNumber = 0;
-    private int pictureNumber = 0;
 
     static final int PERMISSIONS_REQUEST_CODE = 1000;
     String[] PERMISSIONS = {"android.permission.CAMERA", "android.permission.WRITE_EXTERNAL_STORAGE"};
@@ -58,9 +57,7 @@ public class MainActivity extends AppCompatActivity
     private static final int SWIPE_VELOCITY_THRESHOLD = 100;
 
     public native void ConvertRGBtoRGB(long matAddrInput, long matAddrResult);
-
     public native void ConvertRGBtoGray(long matAddrInput, long matAddrResult);
-
     public native void ConvertRGBtoSepia(long matAddrInput, long matAddrResult);
 
 
@@ -105,7 +102,6 @@ public class MainActivity extends AppCompatActivity
         }
 
         mOpenCvCameraView = findViewById(R.id.activity_surface_view);
-
         mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
         mOpenCvCameraView.setCvCameraViewListener(this);
         mOpenCvCameraView.setCameraIndex(cameraNumber); // front-camera(1),  back-camera(0)
@@ -115,8 +111,6 @@ public class MainActivity extends AppCompatActivity
 
         Button mCameraChangeButton = findViewById(R.id.camera_change_btn);
         Button mCameraShotButton = findViewById(R.id.camera_shot_btn);
-
-
 
         mCameraChangeButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -187,16 +181,15 @@ public class MainActivity extends AppCompatActivity
         if (bSaveThisFrame) {
             Bitmap bmp = null;
             try {
-                //Imgproc.cvtColor(seedsImage, tmp, Imgproc.COLOR_RGB2BGRA);
-                Imgproc.cvtColor(matResult, matResult, Imgproc.COLOR_GRAY2RGBA, 4);
+                // TODO: grayFilter 일땐 수정해야 함
+//                Imgproc.cvtColor(seedsImage, tmp, Imgproc.COLOR_RGB2BGRA);
+                Imgproc.cvtColor(matResult, matResult, Imgproc.COLOR_RGB2RGBA, 4);
                 bmp = Bitmap.createBitmap(matResult.cols(), matResult.rows(), Bitmap.Config.ARGB_8888);
                 Utils.matToBitmap(matResult, bmp);
             } catch (CvException e) {
                 Log.d("Exception", e.getMessage());
             }
-            savePNGImageToGallery(bmp, this, "filename" + pictureNumber + ".png");
-            pictureNumber++;
-
+            savePNGImageToGallery(bmp, this, "RanFilter_" + System.currentTimeMillis() + ".png");
             bSaveThisFrame = false;
         }
         return matResult;
@@ -296,9 +289,9 @@ public class MainActivity extends AppCompatActivity
 //        if (event.getAction() != MotionEvent.ACTION_DOWN) {
 //            return false;   // We didn't do anything with this touch movement event.
 //        }
-//        Log.i(TAG, "onTouch down event");
-//
-//        bSaveThisFrame = true;
+        Log.i(TAG, "onTouch down event");
+
+        bSaveThisFrame = true;
         // Signal that we should cartoonify the next camera frame and save it, instead of just showing the sketch.
         //mView.nextFrameShouldBeSaved(getBaseContext());
 
@@ -306,46 +299,46 @@ public class MainActivity extends AppCompatActivity
     }
 
 
-    @Override
-    public boolean onDown(MotionEvent e) {
-        return false;
-    }
+//    @Override
+//    public boolean onDown(MotionEvent e) {
+//        return false;
+//    }
+//    @Override
+//    public void onShowPress(MotionEvent e) {
+//
+//    }
+//
+//    @Override
+//    public boolean onSingleTapUp(MotionEvent e) {
+//        return false;
+//    }
+//
+//    @Override
+//    public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+//        return false;
+//    }
+//
+//    @Override
+//    public void onLongPress(MotionEvent e) {
+//
+//    }
+//
+//    @Override
+//    public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+//        boolean result = false;
+//        float diffY = e2.getY() - e1.getY();
+//        float diffX = e2.getX() - e1.getX();
+//        if (Math.abs(diffX) > Math.abs(diffY)) {
+//            if (Math.abs(diffX) > SWIPE_THRESHOLD && Math.abs(velocityX) > SWIPE_VELOCITY_THRESHOLD) {
+//                if (diffX > 0) {
+//                    Log.i("ranran", "ranran!!");
+//                    //onSwipeRight();
+//                } else {
+//                    //onSwipeLeft();
+//                }
+//            }
+//        }
+//        return false;
+//    }
 
-    @Override
-    public void onShowPress(MotionEvent e) {
-
-    }
-
-    @Override
-    public boolean onSingleTapUp(MotionEvent e) {
-        return false;
-    }
-
-    @Override
-    public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
-        return false;
-    }
-
-    @Override
-    public void onLongPress(MotionEvent e) {
-
-    }
-
-    @Override
-    public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-        boolean result = false;
-        float diffY = e2.getY() - e1.getY();
-        float diffX = e2.getX() - e1.getX();
-        if (Math.abs(diffX) > Math.abs(diffY)) {
-            if (Math.abs(diffX) > SWIPE_THRESHOLD && Math.abs(velocityX) > SWIPE_VELOCITY_THRESHOLD) {
-                if (diffX > 0) {
-                    Log.i("ranran", "ranran!!");
-                    //onSwipeRight();
-                } else {
-                    //onSwipeLeft();
-                }
-            }
-        }
-        return false;
-    }
 }
