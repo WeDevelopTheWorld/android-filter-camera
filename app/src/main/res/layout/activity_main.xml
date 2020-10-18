@@ -4,33 +4,32 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="horizontal"
-    tools:context=".MainActivity"
-    >
+    tools:context=".MainActivity">
+
 
     <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="vertical">
-
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="camera change"
-            android:id="@+id/camera_change_btn"/>
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="camera shot"
-            android:id="@+id/camera_shot_btn"/>
-
-    </LinearLayout>
-
-
-    <org.opencv.android.JavaCameraView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:id="@+id/activity_surface_view" />
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/camera_change_btn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="cam" />
+
+        <org.opencv.android.JavaCameraView
+            android:id="@+id/activity_surface_view"
+            android:layout_width="550dp"
+            android:layout_height="match_parent" />
+
+        <Button
+            android:id="@+id/camera_shot_btn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="camera shot" />
 
 
+    </LinearLayout>
 
 </LinearLayout>

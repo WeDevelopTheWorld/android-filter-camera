@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.Matrix;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -16,7 +17,6 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.SurfaceView;
 import android.view.View;
@@ -92,7 +92,6 @@ public class MainActivity extends AppCompatActivity
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON,
                 WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-
         setContentView(R.layout.activity_main);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -174,6 +173,7 @@ public class MainActivity extends AppCompatActivity
         if (cameraNumber == 1) {
             Core.flip(matInput, matInput, 1);
         }
+
         //if ( matResult != null ) matResult.release(); fix 2018. 8. 18
         if (matResult == null)
             matResult = new Mat(matInput.rows(), matInput.cols(), matInput.type());
@@ -186,8 +186,16 @@ public class MainActivity extends AppCompatActivity
                 // TODO: grayFilter 일땐 수정해야 함
 //                Imgproc.cvtColor(seedsImage, tmp, Imgproc.COLOR_RGB2BGRA);
                 Imgproc.cvtColor(matResult, matResult, Imgproc.COLOR_RGB2RGBA, 4);
+
+                Matrix matrix = new Matrix();
+                matrix.postRotate(90);
                 bmp = Bitmap.createBitmap(matResult.cols(), matResult.rows(), Bitmap.Config.ARGB_8888);
+
+                Matrix m = new Matrix();
+                m.setRotate(90, (float) bmp.getWidth() / 2, (float) bmp.getHeight() / 2);
                 Utils.matToBitmap(matResult, bmp);
+                bmp = Bitmap.createBitmap(bmp, 0, 0, bmp.getWidth(), bmp.getHeight(), m, true);
+
             } catch (CvException e) {
                 Log.d("Exception", e.getMessage());
             }
@@ -287,16 +295,8 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public boolean onTouch(View v, MotionEvent event) {
-        // Ignore finger movement event, we just care about when the finger first touches the screen.
-//        if (event.getAction() != MotionEvent.ACTION_DOWN) {
-//            return false;   // We didn't do anything with this touch movement event.
-//        }
         Log.i(TAG, "onTouch down event");
-
         bSaveThisFrame = true;
-        // Signal that we should cartoonify the next camera frame and save it, instead of just showing the sketch.
-        //mView.nextFrameShouldBeSaved(getBaseContext());
-
         return false;
     }
 
