@@ -50,6 +50,9 @@ public class MainActivity extends AppCompatActivity
     private boolean bSaveThisFrame = false;
     private int cameraNumber = 0;
 
+    private int filterIndex = 0;
+    private int totalFilterSize = 3;
+
     static final int PERMISSIONS_REQUEST_CODE = 1000;
     String[] PERMISSIONS = {"android.permission.CAMERA", "android.permission.WRITE_EXTERNAL_STORAGE"};
 
@@ -178,7 +181,16 @@ public class MainActivity extends AppCompatActivity
         if (matResult == null)
             matResult = new Mat(matInput.rows(), matInput.cols(), matInput.type());
 
-        ConvertRGBtoSepia(matInput.getNativeObjAddr(), matResult.getNativeObjAddr());
+        if (filterIndex == 0) {
+            ConvertRGBtoRGB(matInput.getNativeObjAddr(), matResult.getNativeObjAddr());
+        }
+        else if (filterIndex == 1) {
+            ConvertRGBtoSepia(matInput.getNativeObjAddr(), matResult.getNativeObjAddr());
+        }
+        else if (filterIndex == 2) {
+            ConvertRGBtoGray(matInput.getNativeObjAddr(), matResult.getNativeObjAddr());
+        }
+
 
         if (bSaveThisFrame) {
             Bitmap bmp = null;
@@ -296,7 +308,8 @@ public class MainActivity extends AppCompatActivity
     @Override
     public boolean onTouch(View v, MotionEvent event) {
         Log.i(TAG, "onTouch down event");
-        bSaveThisFrame = true;
+//        bSaveThisFrame = true;
+        filterIndex = (filterIndex + 1) % totalFilterSize;
         return false;
     }
 
