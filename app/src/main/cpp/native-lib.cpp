@@ -41,3 +41,20 @@ Java_com_example_ihyelan_opencvuse_MainActivity_ConvertRGBtoRGB(JNIEnv *env, job
     Mat &matResult = *(Mat *)matAddrResult;
     cvtColor(matInput, matResult, COLOR_RGBA2RGB);
 }
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_example_ihyelan_opencvuse_MainActivity_ConvertRGBtoSharpen(JNIEnv *env, jobject instance,
+                                                                    jlong matAddrInput,
+                                                                    jlong matAddrResult) {
+    // 입력 RGBA 이미지를 Sepia 이미지로 변환
+    Mat &matInput = *(Mat *)matAddrInput;
+    Mat &matResult = *(Mat *)matAddrResult;
+
+    cv::Mat kern = (cv::Mat_<float>(4,4) <<  -1, -1, -1, 0,
+            -1, 9, -1, 0,
+            -1, -1, -1, 0,
+            0, 0, 0, 1);
+
+    filter2D(matInput, matResult, -1, kern);
+}

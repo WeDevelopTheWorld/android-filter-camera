@@ -51,7 +51,7 @@ public class MainActivity extends AppCompatActivity
     private int cameraNumber = 0;
 
     private int filterIndex = 0;
-    private int totalFilterSize = 3;
+    private int totalFilterSize = 4;
 
     static final int PERMISSIONS_REQUEST_CODE = 1000;
     String[] PERMISSIONS = {"android.permission.CAMERA", "android.permission.WRITE_EXTERNAL_STORAGE"};
@@ -64,6 +64,8 @@ public class MainActivity extends AppCompatActivity
     public native void ConvertRGBtoGray(long matAddrInput, long matAddrResult);
 
     public native void ConvertRGBtoSepia(long matAddrInput, long matAddrResult);
+
+    public native void ConvertRGBtoSharpen(long matAddrInput, long matAddrResult);
 
 
     static {
@@ -189,14 +191,13 @@ public class MainActivity extends AppCompatActivity
         }
         else if (filterIndex == 2) {
             ConvertRGBtoGray(matInput.getNativeObjAddr(), matResult.getNativeObjAddr());
+        } else {
+            ConvertRGBtoSharpen(matInput.getNativeObjAddr(), matResult.getNativeObjAddr());
         }
-
 
         if (bSaveThisFrame) {
             Bitmap bmp = null;
             try {
-                // TODO: grayFilter 일땐 수정해야 함
-//                Imgproc.cvtColor(seedsImage, tmp, Imgproc.COLOR_RGB2BGRA);
                 Imgproc.cvtColor(matResult, matResult, Imgproc.COLOR_RGB2RGBA, 4);
 
                 Matrix matrix = new Matrix();
