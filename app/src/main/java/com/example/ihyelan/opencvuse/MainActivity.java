@@ -12,10 +12,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
-//import androidx.support.annotation.NonNull;
-//import android.support.v4.content.ContextCompat;
-//import android.support.v7.app.AlertDialog;
-//import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceView;
@@ -23,8 +19,10 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
 
+import com.example.ihyelan.opencvuse.styletransfer.StyleTransferModelExecutor;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.InterstitialAd;
 import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.ads.RequestConfiguration;
 
@@ -50,6 +48,10 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
+//import androidx.support.annotation.NonNull;
+//import android.support.v4.content.ContextCompat;
+//import android.support.v7.app.AlertDialog;
+//import android.support.v7.app.AppCompatActivity;
 
 public class MainActivity extends AppCompatActivity
         implements CameraBridgeViewBase.CvCameraViewListener2, View.OnTouchListener {
@@ -60,12 +62,18 @@ public class MainActivity extends AppCompatActivity
     private Mat matInput;
     private Mat matResult;
     private boolean bSaveThisFrame = false;
-    private int cameraNumber = 0;
+    private boolean useGPU = false;
 
+    private String selectedStyle = "";
+    private String lastSavedFile = "";
+
+    private int cameraNumber = 0;
     private int filterIndex = 0;
     private int totalFilterSize = 4;
-
     static final int PERMISSIONS_REQUEST_CODE = 1000;
+//    private StyleTransferModelExecutor styleTransferModelExecutor;
+    InterstitialAd mInterstitialAd;
+
     String[] PERMISSIONS = {"android.permission.CAMERA", "android.permission.WRITE_EXTERNAL_STORAGE"};
 
     private static final int SWIPE_THRESHOLD = 100;
@@ -120,14 +128,22 @@ public class MainActivity extends AppCompatActivity
             }
         }
 
+        // Ad
         AdView mAdView = findViewById(R.id.adView);
         AdRequest adRequest = new AdRequest.Builder().build();
         mAdView.loadAd(adRequest);
+
+        // Ad
+        mInterstitialAd = new InterstitialAd(this);
+        mInterstitialAd.setAdUnitId("ca-app-pub-3940256099942544/1033173712");
+        mInterstitialAd.loadAd(new AdRequest.Builder().build());
 
         List<String> testDeviceIds = Arrays.asList("30257C08C20362ACDB1737F1A0FEAB9E");
         RequestConfiguration configuration =
                 new RequestConfiguration.Builder().setTestDeviceIds(testDeviceIds).build();
         MobileAds.setRequestConfiguration(configuration);
+
+//        styleTransferModelExecutor = new StyleTransferModelExecutor(this, useGPU);
 
         mOpenCvCameraView = findViewById(R.id.activity_surface_view);
         mOpenCvCameraView.setVisibility(SurfaceView.VISIBLE);
@@ -155,8 +171,19 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onClick(View v) {
                 bSaveThisFrame = true;
+                if (mInterstitialAd.isLoaded()) {
+                    mInterstitialAd.show();
+                } else {
+                    Log.d("TAG", "The interstitial wasn't loaded yet.");
+                }
             }
         });
+
+
+
+
+
+
     }
 
     @Override
@@ -204,7 +231,6 @@ public class MainActivity extends AppCompatActivity
         //if ( matResult != null ) matResult.release(); fix 2018. 8. 18
         if (matResult == null)
             matResult = new Mat(matInput.rows(), matInput.cols(), matInput.type());
-
         if (filterIndex == 0) {
             ConvertRGBtoRGB(matInput.getNativeObjAddr(), matResult.getNativeObjAddr());
         }
@@ -213,8 +239,13 @@ public class MainActivity extends AppCompatActivity
         }
         else if (filterIndex == 2) {
             ConvertRGBtoGray(matInput.getNativeObjAddr(), matResult.getNativeObjAddr());
-        } else {
+        } else if (filterIndex == 3) {
             ConvertRGBtoSharpen(matInput.getNativeObjAddr(), matResult.getNativeObjAddr());
+        } else {
+            //
+//            if(!lastSavedFile.isEmpty() && !selectedStyle.isEmpty()) {
+//                styleTransferModelExecutor.execute(lastSavedFile, selectedStyle, getBaseContext());
+//            }
         }
 
         if (bSaveThisFrame) {
@@ -236,6 +267,8 @@ public class MainActivity extends AppCompatActivity
             }
             savePNGImageToGallery(bmp, this, "RanFilter_" + System.currentTimeMillis() + ".png");
             bSaveThisFrame = false;
+
+
         }
         return matResult;
     }
